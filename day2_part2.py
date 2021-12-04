@@ -23,7 +23,8 @@ def day2(file_name):
                 aim -= distance
                 print('up {} adds {} to your aim, resulting in a value of {}.'.format(distance, distance, aim))
         print("{} * {} => {}".format(horizontal, depth, horizontal * depth))
+        return horizontal * depth
 
 if __name__ == '__main__':
-    day2('day2_test.txt')
+    assert(day2('day2_test.txt') == 900)
     day2('day2_puzzle.txt')

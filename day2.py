@@ -17,7 +17,8 @@ def day2(file_name):
                 depth -= distance
                 print('up {} adds {} to your depth, resulting in a value of {}.'.format(distance, distance, depth))
         print("{} * {} => {}".format(horizontal, depth, horizontal * depth))
+        return horizontal * depth
 
 if __name__ == '__main__':
-    day2('day2_test.txt')
+    assert(day2('day2_test.txt') == 150)
     day2('day2_puzzle.txt')

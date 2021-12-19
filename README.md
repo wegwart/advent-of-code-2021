@@ -11,4 +11,5 @@ My solutions in python
 * Day 5: Hydrothermal Venture
 
 * Day 11: Dumbo Octopus
+* Day 19: Beacon Scanner
 

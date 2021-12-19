@@ -81,4 +81,4 @@ if __name__ == '__main__':
     assert(day11('day11_test5x5.txt', 5, 2) == 9)
     assert(day11('day11_test.txt', 10, 10) == 204)
     assert(day11('day11_test.txt', 10, 100) == 1656)
-    day11('day11_puzzle.txt', 10, 100)
+    day11('day11_puzzle.txt', 20, 100)

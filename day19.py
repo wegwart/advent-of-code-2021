@@ -1,34 +1,40 @@
 import operator
-
-from numpy import unicode_
-from numpy.lib.arraysetops import unique
+import matplotlib.pyplot as plt
 
 class ScannerReport():
     def __init__(self, scanner, beacons):
         self.Scanner = scanner
         self.Beacons = beacons
-    def __str__(self):
-        items = list(self.Beacons)
-        items.append([0,0])
-        items_min = list(map(min, zip(*items)))
-        items_max = list(map(max, zip(*items)))
-        x_min = items_min[0]
-        x_max = items_max[0]
-        y_min = items_min[1]
-        y_max = items_max[1]
-        x_center = abs(x_min)
-        y_center = abs(y_min)
-        report = [['.' for x in range(x_min, x_max+1)] for y in range(y_min, y_max+1)] 
-        report[y_center][x_center] = 'S'
-        for beacon in self.Beacons:
-            report[y_center+beacon[1]][x_center+beacon[0]] = 'B'
-        str = '--- scanner {} ---\n'.format(self.Scanner)
-        for y in range(y_max, y_min-1, -1):
-            for x in range(x_min, x_max+1):
-                str += report[y_center+y][x_center+x]
-            str += '\n'
-        return str
 
+    def plot(self):
+        if len(self.Beacons[0]) == 3:
+            self.plot3D()
+        else:
+            self.plot2D()    
+            
+    def plot2D(self):
+        plt.clf()
+        x = list(zip(*self.Beacons))[0]
+        y = list(zip(*self.Beacons))[1]   
+        plt.plot(0, 0, 'o')
+        plt.plot(x, y, 'x')
+        plt.grid()
+        plt.title('--- scanner {} ---\n'.format(self.Scanner))
+        #plt.show()
+        plt.savefig('day19_2D_scanner{}.png'.format(self.Scanner))   
+        
+    def plot3D(self):
+        plt.clf()
+        x = list(zip(*self.Beacons))[0]
+        y = list(zip(*self.Beacons))[1]
+        z = list(zip(*self.Beacons))[2]
+        ax = plt.axes(projection='3d')        
+        ax.scatter3D(0, 0, 0, 'o')
+        ax.scatter3D(x, y, z, '.')
+        ax.grid()
+        plt.title('--- scanner {} ---\n'.format(self.Scanner))
+        plt.savefig('day19_3D_scanner{}.png'.format(self.Scanner))   
+        
 def readScannerReport(f):
     beacons = list()
     while(True):
@@ -43,15 +49,15 @@ def readScannerReport(f):
         beacon = list(map(lambda x: int(x), line.strip().split(',')))
         beacons.append(beacon)
 
-def readScannerReports(file_name, print_report = False):
+def readScannerReports(file_name, plot_report = True):
     scanner_reports = list()
     with open(file_name) as f:
         while(True):
             scanner_report = readScannerReport(f)
             if scanner_report == None:
                 break 
-            if print_report:
-                print(scanner_report)
+            if plot_report:
+                scanner_report.plot()                   
             scanner_reports.append(scanner_report)
     return scanner_reports
 
@@ -65,40 +71,49 @@ def getBeaconPairs(scanner_report, print_beacons = False):
                 continue
             beacon_delta = list(map(operator.sub, beacon_other, beacon))
             if print_beacons:
-                print('{} {} --> {}'.format(beacon, beacon_other, beacon_delta))
+                print('{} {} --> {}'.format(beacon, beacon_other, beacon_delta))                             
             beacon_pairs.append([beacon, beacon_other, beacon_delta])
     return beacon_pairs
                     
-def findOverlappingBeacons(scanner_reports):
-    matches = 0
+def findOverlappingBeacons(scanner_reports, print_overlaps = False, print_overlap_results = True):
+    overlap_results = []
     for scanner_report in scanner_reports:
         for scanner_report_other in scanner_reports:
             if scanner_report.Scanner >= scanner_report_other.Scanner:
                 continue
             beacon_pairs = getBeaconPairs(scanner_report)
             beacon_pairs_other = getBeaconPairs(scanner_report_other)
-            print('compare scanner {} with {}'.format(scanner_report_other.Scanner, scanner_report.Scanner))
+            if print_overlaps:                        
+                print('compare scanner {} with {}'.format(scanner_report_other.Scanner, scanner_report.Scanner))
             for beacon_pair in beacon_pairs:
                 for beacon_pair_other in beacon_pairs_other:
                     error = list(map(operator.sub, beacon_pair[2], beacon_pair_other[2]))
                     abs_error = map(operator.abs, error)
                     if sum(abs_error) == 0:
-                        scanner_other = list(map(operator.sub, beacon_pair[0], beacon_pair_other[0]))                        
-                        print('{} {} --> {} equals {} {} --> {} ==> {}'.format(beacon_pair[0], beacon_pair[1], beacon_pair[2],
-                                                                        beacon_pair_other[0], beacon_pair_other[1], beacon_pair_other[2],
-                                                                        scanner_other))   
-                        matches += 1
-    return matches            
+                        scanner_other = list(map(operator.sub, beacon_pair[0], beacon_pair_other[0]))
+                        if print_overlaps:                        
+                            print('{} {} --> {} equals {} {} --> {} ==> {}'.format(beacon_pair[0], beacon_pair[1], beacon_pair[2],
+                                                                            beacon_pair_other[0], beacon_pair_other[1], beacon_pair_other[2],
+                                                                            scanner_other))
+                        found = False
+                        for overlap_result in overlap_results:
+                            if scanner_report_other.Scanner == overlap_result[0] and scanner_report.Scanner == overlap_result[1] and scanner_other == overlap_result[2]:
+                                found = True
+                        if not found:    
+                            if print_overlap_results:
+                                print('scanner {} to scanner {} --> {}'.format(scanner_report_other.Scanner, scanner_report.Scanner, scanner_other))
+                            overlap_results.append([scanner_report_other.Scanner, scanner_report.Scanner, scanner_other])
+    return overlap_results            
 
 def day19(file_name):
     scanner_reports = readScannerReports(file_name)
-    matches = findOverlappingBeacons(scanner_reports)                         
-    return matches
+    matches = findOverlappingBeacons(scanner_reports)
+    return len(matches)
 
 if __name__ == '__main__':
-    assert(len(readScannerReports('day19_test2d.txt', True)) == 2)
-    assert(day19('day19_test2d.txt') == 6)
+    assert(len(readScannerReports('day19_test2d.txt')) == 2)
+    assert(day19('day19_test2d.txt') == 1)
     assert(len(readScannerReports('day19_test3d.txt')) == 5)
-    assert(day19('day19_test3d.txt') == 132)
+    assert(day19('day19_test3d.txt') == 1)
 
 
